@@ -1,151 +1,175 @@
-var PLAY;
-var END;
+var PLAY = 1;
+var END = 0;
 var gameState = PLAY;
-var ground;
-var fox, fox_running;
-var grape, grapesGroup, grape1, grape2, grape3, grape4;
-var tree, treesGroup, tree1, tree2, tree3, tree4;
-var obstacle, obstaclesGroup, obstacle1, obstacle2, obstacle3;
-var score = 0;
 
+var score = 0;
+var current_score;
+
+var ground, bImg;
+var train, tImg;
+var triangle, triaImg;
+var triangle_jumpImg;
+var inGround;
+var gameOver_sound;
+var jump_sound;
+var checkpoint_sound;
 
 function preload() {
-  fox_running = loadAnimation("fox_running1.png", "fox_running2.png");
-  tree1 = loadImage("tree1.png");
-  tree2 = loadImage("tree2.png");
-  tree3 = loadImage("tree3.png");
-  tree4 = loadImage("tree4.png");
+  tImg = loadImage("Train_Run.png");
+  triaImg = loadAnimation("Triangle_Run.png");
+  triangle_jumpImg = loadAnimation("triangle_jump.png");
+  bImg = loadImage("background.jpg");
 
-  grape1 = loadImage("grape1.png");
-  grape2 = loadImage("grape2.png");
-  grape3 = loadImage("grape3.png");
-  grape4 = loadImage("grape4.png");
+  gameOver_sound = loadSound("die.mp3");
+  jump_sound = loadSound("jump.mp3");
+  checkpoint_sound = loadSound("checkPoint.mp3");
 
-  obstacle1 = loadImage("obstacle1.png");
-  obstacle2 = loadImage("obstacle2.png");
-  obstacle3 = loadImage("obstacle3.png");
-  obstacle4 = loadImage("obstacle4.png");
 }
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(800, 700);
 
-  treesGroup = createGroup();
-  grapesGroup = createGroup();
+  ground = createSprite(-200, 200);
+  ground.addImage(bImg);
+  ground.scale = 0.5;
+  ground.velocityX = -(7 + 7 * score / 50);
 
-  Fox();
+  inGround = createSprite(500, 530, 1000, 50);
+  inGround.visible = false;
 
-  ground = createSprite(100, 550, 10000, 20);
+  trainsGroup = createGroup();
+
+  triangle = createSprite(80, 450);
+  triangle.addAnimation("running", triaImg);
+  triangle.addAnimation("jumping", triangle_jumpImg);
+  triangle.scale = 0.15;
+
+  triangle.depth = trainsGroup.depth;
+  triangle.depth = triangle.depth + 1;
+
+  triangle.setCollider("circle", 0, 0, 300);
+  triangle.debug = true;
+
 
 }
 
 function draw() {
-  background(27);
+  background(255);
+
+  console.log("this is " + gameState);
+
+  fill("gold");
+  strokeWeight(5);
+  stroke("red");
+  textSize(50);
+  text("Score  :   " + score, 200, 650);
 
   if (gameState === PLAY) {
-    ground.velocityX = -4;
+    score = score + 1;
 
-    if (ground.x < 0) {
-      ground.x = ground.width / 2;
+    ground.visible = true;
+    trainsGroup.visible = true;
+    triangle.visible = true;
 
+    if (ground.x < 150) {
+      ground.x = ground.width / 4;
+    }
+
+    if (triangle.y > 450) {
+      triangle.changeAnimation("running", triaImg);
+    }
+
+    if (keyDown("Space") && triangle.y > 450) {
+      triangle.velocityY = -20;
+      jump_sound.play();
+      triangle.changeAnimation("jumping", triangle_jumpImg);
     }
 
 
-    console.log("helooo");
 
+    triangle.velocityY = triangle.velocityY + 0.9;
+
+    triangle.collide(inGround);
+
+    if (score > 0 && score % 200 === 0) {
+      checkpoint_sound.play();
+    }
+
+
+
+    spawnTrains();
+
+    if (trainsGroup.isTouching(triangle)) {
+      gameState = END;
+      gameOver_sound.play();
+    }
+
+
+
+  } else if (gameState === END) {
+    background(0);
+
+    ground.visible = false;
+    trainsGroup.destroyEach();
+    triangle.visible = false;
+
+    triangle.collide(inGround);
+
+    if (triangle.y > 450) {
+      triangle.changeAnimation("running", triaImg);
+    }
+
+    trainsGroup.setVelocityXEach(0);
+
+    fill("red");
+    strokeWeight(16);
+    stroke("cyan");
+    textSize(100);
+    text('GAME OVER!!', 50, 200);
+
+    fill("purple");
+    strokeWeight(10);
+    stroke("lime");
+    textSize(40);
+    text("click on 'enter' key to play again", 100, 350);
+
+    fill("gold");
+    strokeWeight(5);
+    stroke("red");
+    textSize(50);
+    text("Score  :   " + score, 200, 650);
+
+    score = score + 0;
 
 
   }
 
-
-
-  spawnTrees();
-  spawnGrapes();
+  if (keyDown("ENTER")) {
+    reset();
+    frameCount = 0;
+    score = 0;
+  }
   drawSprites();
 }
 
-function spawnTrees() {
-  if (frameCount % 250 === 0) {
-    tree = createSprite(0, 490);
-    tree.velocityX = 4;
-    var rand = Math.round(random(1, 4));
-    switch (rand) {
-      case 1:
-        tree.addImage(tree1);
-        break;
+function spawnTrains() {
+  if (frameCount % 100 === 0) {
+    train = createSprite(800, 470);
+    train.addImage(tImg);
+    train.scale = 0.1;
+    train.velocityX = -(6 + 3 * score / 100);
+    train.lifetime = 300;
 
-      case 2:
-        tree.addImage(tree2);
-        break;
+    train.setCollider("rectangle", 0, 0, 700, 750);
+    train.debug = true;
 
-      case 3:
-        tree.addImage(tree3);
-        break;
-
-      case 4:
-        tree.addImage(tree4);
-        break;
-      default:
-        break;
-    }
-
-    tree.scale = 0.1;
-    tree.lifetime = 500;
-
-    fox.depth = tree.depth;
-    tree.depth = tree.depth + 1;
-
-    treesGroup.add(tree);
+    trainsGroup.add(train);
   }
-}
 
-function Fox() {
-  fox = createSprite(700, 480);
-  fox.addAnimation("running", fox_running);
-  fox.scale = 0.18;
 
 }
 
-function spawnGrapes() {
-  if (frameCount % 150 === 0) {
-    grape = createSprite(0, 320);
-    grape.velocityX = 4;
-    var rand = Math.round(random(1, 4));
-
-    switch (rand) {
-      case 1:
-        grape.addImage(grape1);
-        break;
-
-      case 2:
-        grape.addImage(grape2);
-        break;
-
-      case 3:
-        grape.addImage(grape3);
-        break;
-
-      case 4:
-        grape.addImage(grape4);
-        break;
-      default:
-        break;
-    }
-
-    grape.scale = 0.05;
-    grape.lifetime = 500;
-
-    grapesGroup.add(grape);
-  }
-
-}
-
-function spawnObastacles() {
-  if (frameCount % 300 === 0) {
-    obstacle = createSprite()
-
-
-  }
-
+function reset() {
+  gameState = PLAY;
 
 }

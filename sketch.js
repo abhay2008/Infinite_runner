@@ -48,8 +48,6 @@ function setup() {
   triangle.depth = triangle.depth + 1;
 
   triangle.setCollider("circle", 0, 0, 300);
-  triangle.debug = true;
-
 
 }
 
@@ -161,7 +159,6 @@ function spawnTrains() {
     train.lifetime = 300;
 
     train.setCollider("rectangle", 0, 0, 700, 750);
-    train.debug = true;
 
     trainsGroup.add(train);
   }

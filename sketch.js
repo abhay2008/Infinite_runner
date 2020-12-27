@@ -39,7 +39,7 @@ function setup() {
 
   trainsGroup = createGroup();
 
-  triangle = createSprite(80, 450);
+  triangle = createSprite(width / 2, 450);
   triangle.addAnimation("running", triaImg);
   triangle.addAnimation("jumping", triangle_jumpImg);
   triangle.scale = 0.15;
